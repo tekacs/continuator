@@ -80,16 +80,42 @@ println!("downloaded clip {}", clip.file_path.display());
 
 See `just run -- --help` for the full command surface.
 
-## Example Clips
+## Example Clips (Veo 3 Preview)
+
+```bash
+just create-veo test-veo-1 "A cat walking through a forest"
+```
+
+https://github.com/user-attachments/assets/b245bc80-9e5c-4b1b-a0ec-ea332321312d
+
+```bash
+just continue-veo test-veo-2 "The cat stumbles on a gold pocket watch"
+```
+
+https://github.com/user-attachments/assets/ca23040c-4837-4e98-88f8-8f74e1f76128
+
+```bash
+just stitch test-veo test-veo-1 test-veo-2
+```
+
+https://github.com/user-attachments/assets/6ffdd85e-6598-452f-8a38-e73974e39ee9
+
+## Example Clips (Sora 2)
 
 ```bash
 just create-sora test-1 "A cat walking through a forest"
 ```
 
-https://github.com/user-attachments/assets/624b82c2-0a4b-4179-a46f-86a2c02f29c5
+https://github.com/user-attachments/assets/427514aa-6717-4b4d-83d6-fbe4575c4e94
 
 ```bash
 just continue-sora test-1 test-2 "The cat stumbles on a gold pocket watch"
 ```
 
-https://github.com/user-attachments/assets/a85f12d7-21d0-4725-a29d-ab7340d017f7
+https://github.com/user-attachments/assets/f1d063c4-39cb-4b48-9b0a-2cb5ec6774cf
+
+```bash
+just stitch test test-1 test-2
+```
+
+https://github.com/user-attachments/assets/e8e640ad-a5e2-4995-819e-b4312b926e47
