@@ -19,9 +19,14 @@ just continue-clip intro intro-b "Camera dollies closer as the coupe crests a hi
 
 # list everything the tool knows about
 just run list
+
+# grab a fresh copy of a rendered asset
+just download test-1 video videos/test-1.mp4
 ```
 
 Pass `--model sora-2-pro`, `--seconds 12`, etc. by piping through the generic runner, e.g. `just run -- --model sora-2-pro create --id ...`.
+
+Use `just download <id> <variant> <output>` to re-fetch assets. Variants may be `video`, `thumbnail`, or `spritesheet`.
 
 ## Library overview
 
