@@ -1,6 +1,6 @@
-# sora-continuator
+# continuator
 
-A small Rust helper for stitching Sora 2 video clips together. It speaks the OpenAI Video API, pulls down the rendered MP4s, and shells out to `ffmpeg` to extract the last frame as the seed for the next shot. The crate ships both a library (`sora_continuator`) and a CLI.
+A small Rust helper for stitching AI generated video clips together. It speaks the OpenAI Video API, pulls down the rendered MP4s, and shells out to `ffmpeg` to extract the last frame as the seed for the next shot. The crate ships both a library (`continuator`) and a CLI.
 
 ## Requirements
 
@@ -36,7 +36,7 @@ Run `just stitch <id> <clip...>` (or `cargo run -- stitch --id <id> <clip...>`) 
 ## Library overview
 
 ```rust
-use sora_continuator::{SoraConfig, VideoManager, CreateVideoRequest};
+use continuator::{SoraConfig, VideoManager, CreateVideoRequest};
 
 # async context
 let manager = VideoManager::new(SoraConfig::default())?;
