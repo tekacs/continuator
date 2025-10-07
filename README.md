@@ -55,10 +55,12 @@ See `just run -- --help` for the full command surface.
 just create test-1 "A cat walking through a forest"
 ```
 
-<video controls width="640" src="videos/test-1.mp4" title="test-1: A cat walking through a forest"></video>
+https://github.com/user-attachments/assets/624b82c2-0a4b-4179-a46f-86a2c02f29c5
 
 ```bash
 just continue-clip test-1 test-2 "The cat stumbles on a gold pocket watch"
 ```
 
-<video controls width="640" src="videos/test-2.mp4" title="test-2: The cat stumbles on a gold pocket watch"></video>
+https://github.com/user-attachments/assets/a85f12d7-21d0-4725-a29d-ab7340d017f7
+
+
