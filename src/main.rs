@@ -94,6 +94,15 @@ enum Command {
         #[arg(long)]
         output: PathBuf,
     },
+    /// Concatenate local clips into a single output MP4.
+    Stitch {
+        /// Local identifier to assign to the stitched clip output file.
+        #[arg(long)]
+        id: String,
+        /// One or more clip identifiers to concatenate (positional arguments).
+        #[arg(required = true)]
+        clips: Vec<String>,
+    },
 }
 
 #[derive(Debug, Clone, clap::ValueEnum)]
@@ -188,6 +197,14 @@ async fn main() -> Result<()> {
                 .context("failed to download asset")?;
 
             info!(path = %output.display(), "downloaded asset");
+        }
+        Command::Stitch { id, clips } => {
+            let path = manager
+                .stitch_videos(&id, &clips)
+                .await
+                .context("failed to stitch clips")?;
+
+            println!("stitched {} -> {}", id, path.display());
         }
     }
 

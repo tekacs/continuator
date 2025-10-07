@@ -28,3 +28,7 @@ continue-clip parent id prompt:
 # Download an asset variant for a clip.
 download id variant output:
     cargo run -- download --id {{id}} --variant {{variant}} --output {{output}}
+
+# Concatenate clips via the CLI.
+stitch id *clips:
+    cargo run -- stitch --id {{id}} {{clips}}

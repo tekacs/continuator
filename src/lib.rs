@@ -33,6 +33,8 @@ pub enum SoraError {
     FfmpegMissing,
     #[error("ffmpeg command failed: {0}")]
     FfmpegFailed(String),
+    #[error("video concatenation failed: {0}")]
+    FfmpegConcatFailed(String),
     #[error("video generation job failed: {0}")]
     JobFailed(String),
     #[error("video not found locally: {0}")]
@@ -335,6 +337,64 @@ impl VideoManager {
         }
         entries.sort_by(|a, b| a.local_id.cmp(&b.local_id));
         Ok(entries)
+    }
+
+    /// Concatenate multiple local clips into a single MP4 under the output identifier.
+    pub async fn stitch_videos(
+        &self,
+        output_local_id: &str,
+        input_local_ids: &[String],
+    ) -> Result<PathBuf, SoraError> {
+        if input_local_ids.is_empty() {
+            return Err(SoraError::InvalidConfig(
+                "stitch requires at least one input clip".to_string(),
+            ));
+        }
+
+        self.ensure_data_dir().await?;
+
+        let output_path = self.video_path(output_local_id);
+        let manifest_path = self
+            .config
+            .data_dir
+            .join(format!(".concat-{}.txt", output_local_id));
+
+        let mut manifest = String::new();
+        for id in input_local_ids {
+            let metadata = self.load_metadata(id).await?;
+            if !metadata.file_path.exists() {
+                return Err(SoraError::VideoNotFound(id.clone()));
+            }
+            let abs_path = fs::canonicalize(&metadata.file_path).await?;
+            manifest.push_str(&format!("file '{}'\n", abs_path.display()));
+        }
+
+        fs::write(&manifest_path, manifest).await?;
+
+        let status = Command::new("ffmpeg")
+            .arg("-y")
+            .arg("-f")
+            .arg("concat")
+            .arg("-safe")
+            .arg("0")
+            .arg("-i")
+            .arg(&manifest_path)
+            .arg("-c")
+            .arg("copy")
+            .arg(&output_path)
+            .status()
+            .await
+            .map_err(|_| SoraError::FfmpegMissing)?;
+
+        let _ = fs::remove_file(&manifest_path).await;
+
+        if !status.success() {
+            return Err(SoraError::FfmpegConcatFailed(format!(
+                "ffmpeg exited with status {status}"
+            )));
+        }
+
+        Ok(output_path)
     }
 
     async fn wait_for_completion(&self, remote_id: String) -> Result<VideoJob, SoraError> {

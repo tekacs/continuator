@@ -22,11 +22,16 @@ just run list
 
 # grab a fresh copy of a rendered asset
 just download test-1 video videos/test-1.mp4
+
+# stitch clips together into a single video under videos/test.mp4
+just stitch test test-1 test-2
 ```
 
 Pass `--model sora-2-pro`, `--seconds 12`, etc. by piping through the generic runner, e.g. `just run -- --model sora-2-pro create --id ...`.
 
 Use `just download <id> <variant> <output>` to re-fetch assets. Variants may be `video`, `thumbnail`, or `spritesheet`.
+
+Run `just stitch <id> <clip...>` (or `cargo run -- stitch --id <id> <clip...>`) to concatenate existing clips locally; the result lands at `videos/<id>.mp4`.
 
 ## Library overview
 
@@ -62,5 +67,3 @@ just continue-clip test-1 test-2 "The cat stumbles on a gold pocket watch"
 ```
 
 https://github.com/user-attachments/assets/a85f12d7-21d0-4725-a29d-ab7340d017f7
-
-
