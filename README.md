@@ -1,12 +1,15 @@
 # continuator
 
-A small Rust helper for stitching AI generated video clips together. It speaks the OpenAI Video API, pulls down the rendered MP4s, and shells out to `ffmpeg` to extract the last frame as the seed for the next shot. The crate ships both a library (`continuator`) and a CLI.
+A small Rust helper for stitching AI generated video clips together. It can talk to OpenAI’s Sora Video API _and_ Google’s Veo 3 Preview on Vertex AI, pulls down the rendered MP4s, and shells out to `ffmpeg` to extract the last frame as the seed for the next shot. The crate ships both a library (`continuator`) and a CLI.
 
 ## Requirements
 
 - Rust 1.80+
 - `ffmpeg` available on your `PATH`
-- `OPENAI_API_KEY` exported in your shell
+- For Sora: `OPENAI_API_KEY` exported in your shell
+- For Veo: a Google Cloud project with Vertex AI enabled, a location such as `us-central1`, and either
+  - `gcloud auth print-access-token` available on your `PATH` (continuator will call it on demand), or
+  - a short-lived OAuth token exported as `--gcp-access-token`/`$GCP_ACCESS_TOKEN`
 
 ## CLI quickstart
 
@@ -29,6 +32,20 @@ just stitch test test-1 test-2
 
 Pass `--model sora-2-pro`, `--seconds 12`, etc. by piping through the generic runner, e.g. `just run -- --model sora-2-pro create --id ...`.
 
+To target Veo 3 Preview instead of Sora, add a backend selector and GCP metadata:
+
+```bash
+just run -- \
+  --provider veo \
+  --gcp-project my-gcp-project \
+  --gcp-location us-central1 \
+  --model veo-3.0-generate-preview \
+  create --id dune-001 \
+  --prompt "Immersive sandstorm rolling across a scorched dune sea, cinematic lighting"
+```
+
+If you omit `--gcp-access-token`, the CLI will shell out to `gcloud auth print-access-token` for you. The `continue` command automatically captures the final frame of the parent clip and sends it as the first frame reference when talking to Veo, matching Continuator’s existing Sora behaviour.
+
 Use `just download <id> <variant> <output>` to re-fetch assets. Variants may be `video`, `thumbnail`, or `spritesheet`.
 
 Run `just stitch <id> <clip...>` (or `cargo run -- stitch --id <id> <clip...>`) to concatenate existing clips locally; the result lands at `videos/<id>.mp4`.
@@ -36,10 +53,16 @@ Run `just stitch <id> <clip...>` (or `cargo run -- stitch --id <id> <clip...>`) 
 ## Library overview
 
 ```rust
-use continuator::{SoraConfig, VideoManager, CreateVideoRequest};
+use continuator::{ContinuatorConfig, ProviderKind, VideoManager, CreateVideoRequest};
 
 # async context
-let manager = VideoManager::new(SoraConfig::default())?;
+let manager = VideoManager::new(ContinuatorConfig {
+    provider: Some(ProviderKind::Veo),
+    model: Some("veo-3.0-generate-preview".into()),
+    gcp_project: Some("my-gcp-project".into()),
+    gcp_location: Some("us-central1".into()),
+    ..ContinuatorConfig::default()
+})?;
 let clip = manager
     .create_video(CreateVideoRequest {
         local_id: "test-seed".into(),

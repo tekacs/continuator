@@ -2,15 +2,19 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use sora_continuator::{
-    ContinueVideoRequest, CreateVideoRequest, SoraConfig, VideoManager, VideoVariant,
+use continuator::{
+    ContinueVideoRequest, CreateVideoRequest, ProviderKind, SoraConfig, VideoManager, VideoVariant,
 };
 use tracing::info;
 use tracing_subscriber::EnvFilter;
 
 #[derive(Parser, Debug)]
-#[command(author, version, about = "Generate and extend Sora videos via the CLI", long_about = None)]
+#[command(author, version, about = "Generate and extend Continuator video slices via the CLI", long_about = None)]
 struct Cli {
+    /// Video generation backend (sora or veo).
+    #[arg(long, global = true, value_enum)]
+    provider: Option<ProviderKind>,
+
     /// Override the OpenAI API key. Defaults to the OPENAI_API_KEY environment variable.
     #[arg(long, global = true)]
     api_key: Option<String>,
@@ -35,13 +39,41 @@ struct Cli {
     #[arg(long, global = true)]
     poll_interval_ms: Option<u64>,
 
+    /// Google Cloud project id for Veo.
+    #[arg(long, global = true)]
+    gcp_project: Option<String>,
+
+    /// Google Cloud location for Veo (for example, us-central1).
+    #[arg(long, global = true)]
+    gcp_location: Option<String>,
+
+    /// Pre-fetched Google Cloud access token for Veo requests.
+    #[arg(long, global = true)]
+    gcp_access_token: Option<String>,
+
+    /// Cloud Storage URI to store Veo outputs instead of returning bytes.
+    #[arg(long, global = true)]
+    gcp_storage_uri: Option<String>,
+
+    /// Whether Veo should generate audio (defaults to true).
+    #[arg(long, global = true)]
+    gcp_generate_audio: Option<bool>,
+
+    /// Preferred Veo resolution (720p or 1080p).
+    #[arg(long, global = true)]
+    gcp_resolution: Option<String>,
+
+    /// Whether Veo should let Gemini enhance prompts (defaults to true).
+    #[arg(long, global = true)]
+    gcp_enhance_prompt: Option<bool>,
+
     #[command(subcommand)]
     command: Command,
 }
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    /// Create a brand-new Sora clip.
+    /// Create a brand-new clip.
     Create {
         /// Local identifier used for filenames (e.g., intro-001).
         #[arg(long)]
@@ -119,12 +151,20 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     let config = SoraConfig {
+        provider: cli.provider,
         api_key: cli.api_key,
         model: cli.model,
         size: cli.size,
         seconds: cli.seconds,
         data_dir: cli.data_dir,
         poll_interval_ms: cli.poll_interval_ms,
+        gcp_project: cli.gcp_project,
+        gcp_location: cli.gcp_location,
+        gcp_access_token: cli.gcp_access_token,
+        gcp_storage_uri: cli.gcp_storage_uri,
+        gcp_generate_audio: cli.gcp_generate_audio,
+        gcp_resolution: cli.gcp_resolution,
+        gcp_enhance_prompt: cli.gcp_enhance_prompt,
     };
 
     let manager = VideoManager::new(config).context("failed to construct video manager")?;
@@ -220,9 +260,10 @@ fn setup_tracing() {
         .try_init();
 }
 
-fn print_metadata(metadata: &sora_continuator::VideoMetadata) {
+fn print_metadata(metadata: &continuator::VideoMetadata) {
     println!("id: {}", metadata.local_id);
     println!("remote_id: {}", metadata.remote_id);
+    println!("backend: {:?}", metadata.backend);
     println!("model: {}", metadata.model);
     println!("seconds: {}", metadata.seconds);
     println!("size: {}", metadata.size);
