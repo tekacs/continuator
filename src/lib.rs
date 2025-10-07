@@ -825,13 +825,13 @@ impl VideoManager {
     ) -> Result<PathBuf, SoraError> {
         let frame_path = std::env::temp_dir().join(format!("{local_id}_last.png"));
         let status = Command::new("ffmpeg")
-            .arg("-sseof")
-            .arg("-1")
+            .arg("-v")
+            .arg("error")
             .arg("-i")
             .arg(video_path)
+            .arg("-vf")
+            .arg("reverse")
             .arg("-frames:v")
-            .arg("1")
-            .arg("-update")
             .arg("1")
             .arg("-y")
             .arg(&frame_path)
