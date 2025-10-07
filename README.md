@@ -35,10 +35,10 @@ Pass `--model sora-2-pro`, `--seconds 12`, etc. by piping through the generic ru
 To target Veo 3 Preview instead of Sora, add a backend selector and GCP metadata:
 
 ```bash
-just create-veo my-gcp-project us-central1 dune-001 "Immersive sandstorm rolling across a scorched dune sea, cinematic lighting"
+just create-veo dune-001 "Immersive sandstorm rolling across a scorched dune sea, cinematic lighting" my-gcp-project us-central1
 ```
 
-If you omit `--gcp-access-token`, the CLI will shell out to `gcloud auth print-access-token` for you. `just continue-veo my-gcp-project us-central1 dune-001 dune-002 "..."` automatically captures the final frame of the parent clip and sends it as the first-frame reference, matching Continuator’s existing Sora behaviour.
+If you omit `--gcp-access-token`, the CLI will shell out to `gcloud auth print-access-token` for you. `just continue-veo dune-001 dune-002 "..." my-gcp-project us-central1` automatically captures the final frame of the parent clip and sends it as the first-frame reference. You can drop the project/location arguments entirely if your `gcloud` config already points at the right project and region.
 
 Use `just download <id> <variant> <output>` to re-fetch assets. Variants may be `video`, `thumbnail`, or `spritesheet`.
 

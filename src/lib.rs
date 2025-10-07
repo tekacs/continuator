@@ -164,14 +164,8 @@ impl ContinuatorConfig {
                 Backend::Sora(SoraBackend { client, defaults })
             }
             ProviderKind::Veo => {
-                let project = self
-                    .gcp_project
-                    .clone()
-                    .ok_or(SoraError::MissingGcpProject)?;
-                let location = self
-                    .gcp_location
-                    .clone()
-                    .ok_or(SoraError::MissingGcpLocation)?;
+                let project = self.resolve_gcp_project()?;
+                let location = self.resolve_gcp_location()?;
                 let token_source = if let Some(token) = self.gcp_access_token.clone() {
                     VeoTokenSource::Static(token)
                 } else {
@@ -211,6 +205,85 @@ impl ContinuatorConfig {
             poll_interval,
         })
     }
+
+    fn resolve_gcp_project(&self) -> Result<String, SoraError> {
+        if let Some(project) = self
+            .gcp_project
+            .as_ref()
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+        {
+            return Ok(project.to_string());
+        }
+
+        if let Ok(env_project) = std::env::var("GCP_PROJECT") {
+            let trimmed = env_project.trim();
+            if !trimmed.is_empty() {
+                return Ok(trimmed.to_string());
+            }
+        }
+
+        if let Some(project) = gcloud_config_value("project")? {
+            return Ok(project);
+        }
+
+        Err(SoraError::MissingGcpProject)
+    }
+
+    fn resolve_gcp_location(&self) -> Result<String, SoraError> {
+        if let Some(location) = self
+            .gcp_location
+            .as_ref()
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+        {
+            return Ok(location.to_string());
+        }
+
+        if let Ok(env_location) = std::env::var("GCP_LOCATION") {
+            let trimmed = env_location.trim();
+            if !trimmed.is_empty() {
+                return Ok(trimmed.to_string());
+            }
+        }
+
+        if let Some(location) = gcloud_config_value("ai/location")? {
+            return Ok(location);
+        }
+
+        if let Some(location) = gcloud_config_value("compute/region")? {
+            return Ok(location);
+        }
+
+        Err(SoraError::MissingGcpLocation)
+    }
+}
+
+fn gcloud_config_value(property: &str) -> Result<Option<String>, SoraError> {
+    let output = std::process::Command::new("gcloud")
+        .args(["config", "get-value", property])
+        .output();
+
+    let output = match output {
+        Ok(output) => output,
+        Err(err) => {
+            if err.kind() == std::io::ErrorKind::NotFound {
+                return Ok(None);
+            }
+            return Ok(None);
+        }
+    };
+
+    if !output.status.success() {
+        return Ok(None);
+    }
+
+    let value = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if value.is_empty() || value == "(unset)" {
+        return Ok(None);
+    }
+
+    Ok(Some(value))
 }
 
 struct ResolvedManagerConfig {

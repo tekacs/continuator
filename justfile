@@ -26,12 +26,28 @@ continue-sora parent id prompt:
     cargo run -- continue --from {{parent}} --id {{id}} --prompt {{quote(prompt)}}
 
 # Create a new Veo clip via the CLI.
-create-veo gcp_project gcp_location id prompt:
-    cargo run -- --provider veo --gcp-project {{gcp_project}} --gcp-location {{gcp_location}} --model veo-3.0-generate-preview create --id {{id}} --prompt {{quote(prompt)}}
+create-veo id prompt gcp_project?="" gcp_location?="":
+    project_flag=""
+    if [ -n "{{gcp_project}}" ]; then
+        project_flag="--gcp-project {{gcp_project}}"
+    fi
+    location_flag=""
+    if [ -n "{{gcp_location}}" ]; then
+        location_flag="--gcp-location {{gcp_location}}"
+    fi
+    cargo run -- --provider veo $project_flag $location_flag --model veo-3.0-generate-preview create --id {{id}} --prompt {{quote(prompt)}}
 
 # Continue a Veo clip using the previous last frame.
-continue-veo gcp_project gcp_location parent id prompt:
-    cargo run -- --provider veo --gcp-project {{gcp_project}} --gcp-location {{gcp_location}} --model veo-3.0-generate-preview continue --from {{parent}} --id {{id}} --prompt {{quote(prompt)}}
+continue-veo parent id prompt gcp_project?="" gcp_location?="":
+    project_flag=""
+    if [ -n "{{gcp_project}}" ]; then
+        project_flag="--gcp-project {{gcp_project}}"
+    fi
+    location_flag=""
+    if [ -n "{{gcp_location}}" ]; then
+        location_flag="--gcp-location {{gcp_location}}"
+    fi
+    cargo run -- --provider veo $project_flag $location_flag --model veo-3.0-generate-preview continue --from {{parent}} --id {{id}} --prompt {{quote(prompt)}}
 
 # Download an asset variant for a clip.
 download id variant output:
