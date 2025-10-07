@@ -91,6 +91,27 @@ enum Command {
         #[arg(long)]
         seconds: Option<u32>,
     },
+    /// Generate a sequence of clips from multiple prompts and stitch them.
+    Flow {
+        /// Base identifier used for generated clip filenames and final stitch.
+        #[arg(long)]
+        id: String,
+        /// Optional starting clip to continue from.
+        #[arg(long)]
+        start_from: Option<String>,
+        /// Override the model for generated clips.
+        #[arg(long)]
+        model: Option<String>,
+        /// Override the size for generated clips.
+        #[arg(long)]
+        size: Option<String>,
+        /// Override the duration in seconds for generated clips.
+        #[arg(long)]
+        seconds: Option<u32>,
+        /// One or more prompts describing each beat of the flow.
+        #[arg(required = true)]
+        prompts: Vec<String>,
+    },
     /// Generate a continuation clip using the last frame of an existing video.
     Continue {
         /// Local identifier of the clip to extend.
@@ -209,6 +230,65 @@ async fn main() -> Result<()> {
                 .await?;
 
             print_metadata(&metadata);
+        }
+        Command::Flow {
+            id,
+            start_from,
+            model,
+            size,
+            seconds,
+            prompts,
+        } => {
+            if prompts.is_empty() {
+                anyhow::bail!("flow requires at least one prompt");
+            }
+
+            let start_clip = start_from.clone();
+            let mut previous = start_from;
+            let mut generated_ids = Vec::new();
+
+            for (index, prompt) in prompts.into_iter().enumerate() {
+                let clip_local_id = format!("{}-{:02}", id, index + 1);
+                let metadata = if let Some(parent_id) = previous.clone() {
+                    manager
+                        .continue_video(ContinueVideoRequest {
+                            parent_local_id: parent_id,
+                            local_id: clip_local_id.clone(),
+                            prompt,
+                            model: model.clone(),
+                            size: size.clone(),
+                            seconds,
+                        })
+                        .await?
+                } else {
+                    manager
+                        .create_video(CreateVideoRequest {
+                            local_id: clip_local_id.clone(),
+                            prompt,
+                            model: model.clone(),
+                            size: size.clone(),
+                            seconds,
+                        })
+                        .await?
+                };
+
+                print_metadata(&metadata);
+                previous = Some(metadata.local_id.clone());
+                generated_ids.push(metadata.local_id);
+            }
+
+            let mut clips_for_stitch = Vec::new();
+            if let Some(start) = start_clip {
+                clips_for_stitch.push(start);
+            }
+            clips_for_stitch.extend(generated_ids);
+
+            let stitched_path = manager
+                .stitch_videos(&id, &clips_for_stitch)
+                .await
+                .context("failed to stitch flow clips")?;
+
+            println!("flow stitched {} -> {}", id, stitched_path.display());
         }
         Command::List => {
             let videos = manager.list_videos().await?;

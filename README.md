@@ -28,6 +28,12 @@ just download test-1 video videos/test-1.mp4
 
 # stitch clips together into a single video under videos/test.mp4
 just stitch test test-1 test-2
+
+# generate a multi-beat flow and stitched output (creates test-flow.mp4)
+just flow-sora test-flow "Wide shot of a teal coupe" "Camera dollies closer"
+
+# reuse an existing clip as the opener and continue it
+just flow-sora test-flow --start-from intro "Camera glides past" "Sunset silhouette"
 ```
 
 Pass `--model sora-2-pro`, `--seconds 12`, etc. by piping through the generic runner, e.g. `just run -- --model sora-2-pro create --id ...`.
@@ -36,6 +42,9 @@ To target Veo 3 Preview instead of Sora, add a backend selector and GCP metadata
 
 ```bash
 just create-veo dune-001 "Immersive sandstorm rolling across a scorched dune sea, cinematic lighting" my-gcp-project us-central1
+
+# Veo flow (project/location optional if gcloud defaults are set)
+just flow-veo dune-flow --gcp-project my-gcp-project --gcp-location us-central1 "Massive dune eruption" "Scavengers sprint through the storm"
 ```
 
 If you omit `--gcp-access-token`, the CLI will shell out to `gcloud auth print-access-token` for you. `just continue-veo dune-001 dune-002 "..." my-gcp-project us-central1` automatically captures the final frame of the parent clip and sends it as the first-frame reference. You can drop the project/location arguments entirely if your `gcloud` config already points at the right project and region.
