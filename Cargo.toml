@@ -2,6 +2,15 @@
 name = "continuator"
 version = "0.1.0"
 edition = "2024"
+authors = ["Amar Sood <pkg@tekacs.com>"]
+description = "Generate and stitch AI video clips using OpenAI Sora and Google Veo."
+license = "MIT"
+repository = "https://github.com/tekacs/continuator"
+homepage = "https://github.com/tekacs/continuator"
+documentation = "https://github.com/tekacs/continuator#readme"
+readme = "README.md"
+keywords = ["video", "cli", "ai", "sora", "veo"]
+categories = ["command-line-utilities", "multimedia::video"]
 
 [dependencies]
 anyhow = "1"
