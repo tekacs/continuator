@@ -43,3 +43,17 @@ println!("downloaded clip {}", clip.file_path.display());
 ```
 
 See `just run -- --help` for the full command surface.
+
+## Example Clips
+
+```bash
+just create test-1 "A cat walking through a forest"
+```
+
+<video controls width="640" src="videos/test-1.mp4" title="test-1: A cat walking through a forest"></video>
+
+```bash
+just continue-clip test-1 test-2 "The cat stumbles on a gold pocket watch"
+```
+
+<video controls width="640" src="videos/test-2.mp4" title="test-2: The cat stumbles on a gold pocket watch"></video>
